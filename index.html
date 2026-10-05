@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111111" />
+  <title>HYBRID 21</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">H21</div>
+        <div>
+          <strong>HYBRID 21</strong>
+          <span>Rumo aos 21K</span>
+        </div>
+      </div>
+      <nav id="nav">
+        <button class="nav-btn active" data-view="dashboard">Hoje</button>
+        <button class="nav-btn" data-view="plan">Plano</button>
+        <button class="nav-btn" data-view="workout">Musculação</button>
+        <button class="nav-btn" data-view="run">Corrida</button>
+        <button class="nav-btn" data-view="history">Histórico</button>
+        <button class="nav-btn" data-view="progress">Evolução</button>
+      </nav>
+      <div class="profile-mini">
+        <div class="avatar">MR</div>
+        <div><b>Maurício</b><span>31 • 1,85m • 93kg</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">PLANO HÍBRIDO</p>
+          <h1 id="page-title">Treino de hoje</h1>
+        </div>
+        <button id="generateBtn" class="primary">Gerar semana</button>
+      </header>
+
+      <section id="dashboard" class="view active">
+        <div class="grid two">
+          <div class="hero-card">
+            <div class="pill">SEMANA ATUAL</div>
+            <h2>Rumo aos 21K</h2>
+            <p>Perder peso, recuperar consistência na corrida e manter musculação 4x/semana.</p>
+            <div class="progress-wrap">
+              <div class="progress-bar"><span style="width:38%"></span></div>
+              <small>Fase 1 • Base e consistência</small>
+            </div>
+          </div>
+          <div class="card stats">
+            <div><strong id="weekWorkouts">0/4</strong><span>musculações</span></div>
+            <div><strong id="weekRuns">0/2</strong><span>corridas</span></div>
+            <div><strong id="weekKm">0 km</strong><span>na semana</span></div>
+            <div><strong id="streak">0</strong><span>dias ativos</span></div>
+          </div>
+        </div>
+
+        <div class="grid three">
+          <div class="card">
+            <p class="eyebrow">CHECK-IN</p>
+            <h3>Como está sua perna?</h3>
+            <div class="range-row">
+              <input id="painRange" type="range" min="0" max="10" value="2">
+              <span id="painValue">2/10</span>
+            </div>
+            <p id="painAdvice" class="muted">Dor baixa. Mantenha atenção à técnica e ao impacto.</p>
+          </div>
+          <div class="card">
+            <p class="eyebrow">FADIGA</p>
+            <h3>Energia hoje</h3>
+            <div class="segmented" id="energySeg">
+              <button data-energy="Baixa">Baixa</button>
+              <button data-energy="Média" class="selected">Média</button>
+              <button data-energy="Alta">Alta</button>
+            </div>
+            <p class="muted">O treino pode ser reduzido automaticamente quando necessário.</p>
+          </div>
+          <div class="card">
+            <p class="eyebrow">PRÓXIMO MARCO</p>
+            <h3>5 km contínuos</h3>
+            <p class="big-number">5K</p>
+            <p class="muted">Primeiro objetivo: voltar a correr 5 km sem caminhar, sem aumentar a dor.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div><p class="eyebrow">SEMANA</p><h3>Agenda de treinos</h3></div>
+          </div>
+          <div id="weekGrid" class="week-grid"></div>
+        </div>
+      </section>
+
+      <section id="plan" class="view">
+        <div class="card">
+          <p class="eyebrow">ESTRATÉGIA</p>
+          <h2>Plano-base semanal</h2>
+          <p class="muted">Corridas preferencialmente terça e quinta. Sábado reservado ao futebol. Pernas priorizam máquinas.</p>
+          <div class="plan-list" id="planList"></div>
+        </div>
+      </section>
+
+      <section id="workout" class="view">
+        <div class="card">
+          <div class="section-head">
+            <div><p class="eyebrow">MUSCULAÇÃO</p><h2 id="workoutTitle">Treino A — Superiores</h2></div>
+            <button class="secondary" id="completeWorkoutBtn">Concluir treino</button>
+          </div>
+          <div id="exerciseList" class="exercise-list"></div>
+        </div>
+      </section>
+
+      <section id="run" class="view">
+        <div class="card">
+          <div class="section-head">
+            <div><p class="eyebrow">CORRIDA</p><h2>Corrida de base</h2></div>
+            <button class="secondary" id="completeRunBtn">Registrar corrida</button>
+          </div>
+          <div class="run-summary">
+            <div><span>Objetivo</span><b>30–40 min</b></div>
+            <div><span>Esforço</span><b>RPE 4–5</b></div>
+            <div><span>Pace referência</span><b>7:00–7:30/km</b></div>
+            <div><span>Estratégia</span><b>Corrida/caminhada</b></div>
+          </div>
+          <div class="run-blocks">
+            <div><b>1</b><span>5 min caminhando + mobilidade leve</span></div>
+            <div><b>2</b><span>5 × 5 min corrida leve + 1 min caminhada</span></div>
+            <div><b>3</b><span>5 min caminhada para desacelerar</span></div>
+          </div>
+          <label class="field">Distância realizada (km)
+            <input id="runDistance" type="number" min="0" step="0.1" placeholder="Ex.: 4.8">
+          </label>
+        </div>
+      </section>
+
+      <section id="history" class="view">
+        <div class="card">
+          <p class="eyebrow">REGISTROS</p>
+          <h2>Histórico</h2>
+          <div id="historyList" class="history-list"></div>
+        </div>
+      </section>
+
+      <section id="progress" class="view">
+        <div class="grid three">
+          <div class="card metric"><span>Peso inicial</span><b>93 kg</b></div>
+          <div class="card metric"><span>Meta corrida</span><b>21 km</b></div>
+          <div class="card metric"><span>Maior distância</span><b id="bestDistance">10 km</b></div>
+        </div>
+        <div class="card">
+          <p class="eyebrow">PROGRESSO</p>
+          <h2>Consistência</h2>
+          <div id="progressBars" class="progress-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
