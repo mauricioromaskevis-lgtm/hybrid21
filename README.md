@@ -1,35 +1,35 @@
-# HYBRID 21
+# HYBRID 21 PRO
 
-MVP de gerenciamento de treino híbrido (musculação + corrida), criado para uso pessoal.
+MVP mais completo do app híbrido de musculação + corrida.
 
-## Recursos
-- Dashboard semanal
-- Plano híbrido com 4 musculações + 2 corridas + futebol
+## O que já existe nesta versão
+- Dashboard
+- Semana inteira visível
+- 4 semanas de progressão
+- 4 treinos de musculação/semana
+- 2 corridas/semana
+- Sábado reservado para futebol
+- Treinos de musculação com exercício, séries, reps, RIR e descanso
+- Corridas com duração, intensidade, estrutura e observações
+- Treino do dia
 - Check-in de dor e energia
-- Ajuste automático simples da semana
-- Registro de musculação
-- Registro de corrida
-- Histórico salvo em LocalStorage
-- Evolução e métricas básicas
-- Layout responsivo para celular
+- Ajuste simples do plano pela dor
+- Registro de carga e treinos
+- Histórico
+- Evolução
+- Coach rápido
+- Exportação do plano
+- Persistência em LocalStorage
+- Responsivo para celular
 
 ## Deploy na Vercel
-1. Crie um repositório no GitHub e envie estes arquivos.
-2. Na Vercel, clique em **Add New > Project**.
+1. Suba os arquivos para um repositório no GitHub.
+2. Na Vercel: Add New > Project.
 3. Importe o repositório.
-4. Framework preset: **Other**.
-5. Build command: deixe vazio.
-6. Output directory: deixe vazio.
-7. Clique em **Deploy**.
+4. Framework Preset: Other.
+5. Build Command: vazio.
+6. Output Directory: vazio.
+7. Deploy.
 
-Como é um app estático, não precisa de backend nessa V1.
-
-## Próximas versões
-- Login e sincronização em nuvem
-- Banco de dados
-- Gerador de treino por regras mais avançadas
-- Progressão automática de carga
-- Integração Strava/Garmin
-- Coach com IA
-- Peso, medidas e gráficos
-- PWA instalável no celular
+## Observação
+Esta versão é um MVP funcional e não substitui avaliação profissional. Como o usuário relatou dor recorrente na perna, a progressão de corrida é conservadora e o app evita tratar isso como diagnóstico.

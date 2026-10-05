@@ -1,171 +1,298 @@
 
 const profile = {
-  name:"Maurício", age:31, height:1.85, weight:93,
-  goal:"Melhorar corrida e perder peso",
-  strengthLevel:"Intermediário",
-  strengthDays:4, runDays:2, sessionMinutes:50,
-  preferredRunDays:["Terça","Quinta"], footballDay:"Sábado",
-  longestRun:10, goalDistance:21,
-  legNote:"Dor recorrente na perna; evitar progressão agressiva e priorizar máquinas em pernas."
+  age:31,height:1.85,weight:93,goal:"Melhorar corrida e perder peso",
+  level:"Intermediário",strengthDays:4,runDays:2,sessionMinutes:50,
+  runDaysPreferred:["Terça","Quinta"],footballDay:"Sábado",
+  currentPace:7.0,longestRun:10,goalDistance:21,
+  legPain:true,freeLegDifficulty:true
 };
 
-const baseWeek = [
-  {day:"Segunda", type:"Musculação", detail:"Superiores A • 50 min"},
-  {day:"Terça", type:"Corrida + leve", detail:"Base 30–40 min + core opcional"},
-  {day:"Quarta", type:"Musculação", detail:"Pernas em máquinas • 45–50 min"},
-  {day:"Quinta", type:"Corrida", detail:"Base/progressivo conforme dor"},
-  {day:"Sexta", type:"Musculação", detail:"Superiores B • 50 min"},
-  {day:"Sábado", type:"Futebol", detail:"Sem musculação/corrida programada"},
-  {day:"Domingo", type:"Musculação", detail:"Full body leve/moderado"}
-];
+const strengthTemplates = {
+  upperA: {
+    title:"Superiores A • Peito + Costas",
+    focus:"Força/hipertrofia sem esgotar para a corrida",
+    exercises:[
+      ["Supino máquina","4","6–8","2–3","90s"],
+      ["Puxada alta pronada","4","8–10","2","90s"],
+      ["Supino inclinado halteres","3","8–10","2–3","75s"],
+      ["Remada baixa","3","8–10","2","75s"],
+      ["Elevação lateral","3","12–15","2","60s"],
+      ["Tríceps corda","3","10–12","2","60s"],
+      ["Rosca no cabo","3","10–12","2","60s"]
+    ]
+  },
+  legsMachines: {
+    title:"Pernas • Máquinas e controle",
+    focus:"Treino seguro, sem depender de exercícios livres",
+    exercises:[
+      ["Leg press 45°","4","8–10","2–3","90s"],
+      ["Cadeira extensora","3","10–12","2","60s"],
+      ["Mesa flexora","4","10–12","2","75s"],
+      ["Cadeira flexora","3","12–15","2","60s"],
+      ["Glúteo máquina/cabo","3","10–12","2","60s"],
+      ["Panturrilha sentado","3","12–15","3","60s"],
+      ["Core anti-rotação","3","10/lado","2","45s"]
+    ]
+  },
+  upperB: {
+    title:"Superiores B • Costas + Ombros",
+    focus:"Volume moderado e boa técnica",
+    exercises:[
+      ["Remada máquina apoiada","4","8–10","2","90s"],
+      ["Desenvolvimento máquina","4","8–10","2","75s"],
+      ["Puxada neutra","3","10–12","2","75s"],
+      ["Crucifixo máquina","3","10–12","2","60s"],
+      ["Elevação lateral","3","12–15","2","60s"],
+      ["Tríceps máquina","3","10–12","2","60s"],
+      ["Rosca máquina","3","10–12","2","60s"]
+    ]
+  },
+  fullBody: {
+    title:"Full body leve/moderado",
+    focus:"Fechar a semana sem atrapalhar corrida/futebol",
+    exercises:[
+      ["Chest press","3","10","3","60s"],
+      ["Remada máquina","3","10","3","60s"],
+      ["Leg press leve","3","12","3","75s"],
+      ["Mesa flexora","3","12","3","60s"],
+      ["Elevação lateral","2","15","3","45s"],
+      ["Tríceps corda","2","12","3","45s"],
+      ["Rosca cabo","2","12","3","45s"],
+      ["Prancha","3","30–45s","2","45s"]
+    ]
+  }
+};
 
-const exercises = [
-  ["Supino máquina", "4", "8–10", "60–90s"],
-  ["Puxada frente", "4", "8–10", "60–90s"],
-  ["Remada baixa", "3", "10–12", "60s"],
-  ["Desenvolvimento máquina", "3", "8–10", "60s"],
-  ["Elevação lateral", "3", "12–15", "45–60s"],
-  ["Tríceps corda", "3", "10–12", "45–60s"],
-  ["Rosca máquina/cabo", "3", "10–12", "45–60s"]
-];
+function makeRun(week, kind){
+  const base = [
+    {easy:30, quality:"5x (4 min corrida + 1 min caminhada)", long:35},
+    {easy:35, quality:"4x (6 min corrida + 1 min caminhada)", long:40},
+    {easy:40, quality:"3x (8 min corrida + 1 min caminhada)", long:45},
+    {easy:30, quality:"5 km confortável, sem meta de pace", long:35}
+  ][week];
+  if(kind==="easy"){
+    return {
+      title:"Corrida leve de base",
+      duration:`${base.easy} min`,
+      pace:"RPE 4–5 • conversa confortável",
+      structure: week < 3 ? base.quality : "Corrida contínua confortável, caminhe se necessário",
+      note:"Sem buscar pace. O objetivo é voltar a correr com consistência e baixa dor."
+    };
+  }
+  return {
+    title:"Corrida progressiva controlada",
+    duration:`${base.long} min`,
+    pace:"Começar fácil e terminar levemente mais firme",
+    structure: week < 3 ? "10 min leve + bloco contínuo confortável + 5 min leve" : "5 km contínuos confortáveis se a perna estiver bem",
+    note:"Se a dor aumentar durante a corrida, interrompa o impacto e troque por caminhada/bike."
+  };
+}
 
-const state = JSON.parse(localStorage.getItem("hybrid21_state") || '{"history":[],"pain":2,"energy":"Média"}');
-function save(){ localStorage.setItem("hybrid21_state", JSON.stringify(state)); }
+function buildPlan(){
+  return [0,1,2,3].map(week=>[
+    {day:"Segunda",type:"strength",key:"upperA"},
+    {day:"Terça",type:"run",run:makeRun(week,"easy")},
+    {day:"Quarta",type:"strength",key:"legsMachines"},
+    {day:"Quinta",type:"run",run:makeRun(week,"quality")},
+    {day:"Sexta",type:"strength",key:"upperB"},
+    {day:"Sábado",type:"football",title:"Futebol",detail:"Atividade principal do dia. Sem corrida ou musculação programada."},
+    {day:"Domingo",type:"strength",key:"fullBody"}
+  ]);
+}
 
-function switchView(view){
+let state = JSON.parse(localStorage.getItem("hybrid21pro_state") || '{"history":[],"pain":2,"energy":"Média","selectedWeek":0,"selectedStrength":"upperA"}');
+let plan = buildPlan();
+function save(){ localStorage.setItem("hybrid21pro_state",JSON.stringify(state)); }
+
+const dayOrder=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+function todayName(){ return dayOrder[new Date().getDay()]; }
+function todaySession(){
+  return plan[state.selectedWeek].find(x=>x.day===todayName()) || plan[state.selectedWeek][0];
+}
+function sessionTitle(s){
+  if(s.type==="strength") return strengthTemplates[s.key].title;
+  if(s.type==="run") return s.run.title;
+  return s.title;
+}
+function sessionShort(s){
+  if(s.type==="strength") return strengthTemplates[s.key].focus;
+  if(s.type==="run") return `${s.run.duration} • ${s.run.pace}`;
+  return s.detail;
+}
+function go(view){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.getElementById(view).classList.add("active");
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
-  const titles={dashboard:"Treino de hoje",plan:"Meu plano",workout:"Musculação",run:"Corrida",history:"Histórico",progress:"Evolução"};
-  document.getElementById("page-title").textContent=titles[view];
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+  const names={dashboard:"Dashboard",week:"Semana completa",today:"Treino do dia",strength:"Musculação",running:"Corrida",history:"Histórico",progress:"Evolução",coach:"Coach"};
+  document.getElementById("pageTitle").textContent=names[view];
 }
-document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>go(b.dataset.view));
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.getElementById("openToday").onclick=()=>go("today");
 
-function renderWeek(){
-  const el=document.getElementById("weekGrid"); el.innerHTML="";
-  baseWeek.forEach(d=>{
-    const div=document.createElement("div"); div.className="day-card";
-    div.innerHTML=`<strong>${d.day}</strong><b>${d.type}</b><span>${d.detail}</span>`;
-    el.appendChild(div);
-  });
-  const plan=document.getElementById("planList"); plan.innerHTML="";
-  baseWeek.forEach(d=>{
-    const div=document.createElement("div"); div.className="plan-item";
-    div.innerHTML=`<div><b>${d.day}</b><span>${d.detail}</span></div><strong>${d.type}</strong>`;
-    plan.appendChild(div);
+function renderMiniWeek(){
+  const el=document.getElementById("dashboardWeek"); el.innerHTML="";
+  plan[state.selectedWeek].forEach(s=>{
+    const d=document.createElement("div"); d.className="day-mini";
+    d.innerHTML=`<strong>${s.day}</strong><b>${sessionTitle(s)}</b><span>${sessionShort(s)}</span>`;
+    el.appendChild(d);
   });
 }
-
-function renderExercises(){
-  const el=document.getElementById("exerciseList"); el.innerHTML="";
-  exercises.forEach((ex,i)=>{
-    const div=document.createElement("div"); div.className="exercise";
-    div.innerHTML=`
-      <div><b>${ex[0]}</b><small>Meta: execução controlada, RIR 2–3</small></div>
-      <div><small>Séries</small><b>${ex[1]}</b></div>
-      <div><small>Reps</small><b>${ex[2]}</b></div>
-      <div><small>Carga (kg)</small><input type="number" data-load="${i}" placeholder="0"></div>`;
-    el.appendChild(div);
+function renderFullWeek(){
+  const el=document.getElementById("fullWeekList"); el.innerHTML="";
+  plan[state.selectedWeek].forEach(s=>{
+    const wrap=document.createElement("div"); wrap.className="day-row";
+    let body="";
+    if(s.type==="strength"){
+      const t=strengthTemplates[s.key];
+      body = `<div class="exercise-table">
+        <div class="exercise-row header"><span>Exercício</span><span>Séries</span><span>Reps</span><span>RIR</span><span>Descanso</span></div>
+        ${t.exercises.map(ex=>`<div class="exercise-row"><b>${ex[0]}</b><span>${ex[1]}</span><span>${ex[2]}</span><span>${ex[3]}</span><span>${ex[4]}</span></div>`).join("")}
+      </div>`;
+    } else if(s.type==="run"){
+      body = `<div class="run-box">
+        <div><span>Duração</span><b>${s.run.duration}</b></div>
+        <div><span>Intensidade</span><b>${s.run.pace}</b></div>
+        <div><span>Estrutura</span><b>${s.run.structure}</b></div>
+        <div><span>Observação</span><b>${s.run.note}</b></div>
+      </div>`;
+    } else {
+      body = `<p class="muted">${s.detail}</p>`;
+    }
+    wrap.innerHTML=`<div class="day-row-head"><div><h3>${s.day}</h3><span class="muted">${sessionTitle(s)}</span></div><span class="tag">${s.type==="strength"?"MUSCULAÇÃO":s.type==="run"?"CORRIDA":"FUTEBOL"}</span></div>${body}`;
+    el.appendChild(wrap);
   });
 }
+document.getElementById("weekSelector").value=state.selectedWeek;
+document.getElementById("weekSelector").onchange=e=>{state.selectedWeek=Number(e.target.value);save();renderAll();};
 
-function register(type, extra={}){
-  state.history.unshift({type, date:new Date().toISOString(), ...extra});
-  save(); renderAll();
+function exerciseTable(template, editable=true){
+  return `<div class="exercise-table">
+    <div class="exercise-row header"><span>Exercício</span><span>Séries</span><span>Reps</span><span>RIR</span><span>${editable?"Carga":"Descanso"}</span></div>
+    ${template.exercises.map((ex,i)=>`<div class="exercise-row">
+      <b>${ex[0]}</b><span>${ex[1]}</span><span>${ex[2]}</span><span>${ex[3]}</span>
+      ${editable?`<input type="number" step="0.5" data-load="${i}" placeholder="kg">`:`<span>${ex[4]}</span>`}
+    </div>`).join("")}
+  </div>`;
 }
-
-document.getElementById("completeWorkoutBtn").onclick=()=>{
-  const loads=[...document.querySelectorAll("[data-load]")].map(i=>Number(i.value)||0);
-  register("Musculação",{title:"Superiores A", loads});
+function renderToday(){
+  const s=todaySession(), el=document.getElementById("todayWorkoutCard");
+  document.getElementById("todayName").textContent=`${s.day} • ${sessionTitle(s)}`;
+  document.getElementById("todaySummary").innerHTML=`<p class="muted">${sessionShort(s)}</p>`;
+  if(s.type==="strength"){
+    const t=strengthTemplates[s.key];
+    el.innerHTML=`<p class="eyebrow">${s.day.toUpperCase()}</p><h2>${t.title}</h2><p class="muted">${t.focus}</p>${exerciseTable(t,true)}<div class="actions-row"><button class="complete" id="completeTodayStrength">Concluir treino</button></div>`;
+    document.getElementById("completeTodayStrength").onclick=()=>completeStrength(s.key);
+  } else if(s.type==="run"){
+    el.innerHTML=`<p class="eyebrow">${s.day.toUpperCase()}</p><h2>${s.run.title}</h2>
+    <div class="run-box"><div><span>Duração</span><b>${s.run.duration}</b></div><div><span>Esforço</span><b>${s.run.pace}</b></div><div><span>Estrutura</span><b>${s.run.structure}</b></div><div><span>Nota</span><b>${s.run.note}</b></div></div>
+    <div class="actions-row"><input id="todayRunKm" class="select" type="number" step="0.1" placeholder="km realizados"><button class="complete" id="completeTodayRun">Registrar corrida</button></div>`;
+    document.getElementById("completeTodayRun").onclick=()=>completeRun(Number(document.getElementById("todayRunKm").value)||0,s.run.title);
+  } else {
+    el.innerHTML=`<p class="eyebrow">${s.day.toUpperCase()}</p><h2>Futebol</h2><p class="muted">${s.detail}</p><div class="actions-row"><button class="complete" id="completeFootball">Registrar futebol</button></div>`;
+    document.getElementById("completeFootball").onclick=()=>register({type:"Futebol",title:"Futebol"});
+  }
+}
+function renderStrength(){
+  const keys=["upperA","legsMachines","upperB","fullBody"];
+  const tabs=document.getElementById("strengthTabs"); tabs.innerHTML="";
+  keys.forEach(k=>{
+    const b=document.createElement("button"); b.textContent=strengthTemplates[k].title.split("•")[0]; b.classList.toggle("active",state.selectedStrength===k);
+    b.onclick=()=>{state.selectedStrength=k;save();renderStrength();}; tabs.appendChild(b);
+  });
+  const t=strengthTemplates[state.selectedStrength];
+  document.getElementById("strengthDetail").innerHTML=`<h3>${t.title}</h3><p class="muted">${t.focus}</p>${exerciseTable(t,true)}<div class="actions-row"><button class="complete" id="completeStrengthBtn">Concluir treino</button></div>`;
+  document.getElementById("completeStrengthBtn").onclick=()=>completeStrength(state.selectedStrength);
+}
+function completeStrength(key){
+  const loads=[...document.querySelectorAll("[data-load]")].map(x=>Number(x.value)||0);
+  register({type:"Musculação",title:strengthTemplates[key].title,loads});
   alert("Treino registrado.");
-};
-document.getElementById("completeRunBtn").onclick=()=>{
-  const distance=Number(document.getElementById("runDistance").value)||0;
-  register("Corrida",{distance,pain:state.pain,energy:state.energy});
-  document.getElementById("runDistance").value="";
+}
+function completeRun(km,title){
+  register({type:"Corrida",title,km,pain:state.pain,energy:state.energy});
   alert("Corrida registrada.");
-};
+}
+function register(entry){state.history.unshift({...entry,date:new Date().toISOString()});save();renderAll();}
 
+function renderRunning(){
+  const el=document.getElementById("runPlan"); el.innerHTML="";
+  plan.forEach((week,wi)=>{
+    const runs=week.filter(s=>s.type==="run");
+    const w=document.createElement("div"); w.className="day-row";
+    w.innerHTML=`<div class="day-row-head"><h3>Semana ${wi+1}</h3><span class="tag">2 CORRIDAS</span></div>
+    ${runs.map(r=>`<div class="run-box" style="margin-top:8px"><div><span>${r.day}</span><b>${r.run.title}</b></div><div><span>Duração</span><b>${r.run.duration}</b></div><div><span>Estrutura</span><b>${r.run.structure}</b></div></div>`).join("")}`;
+    el.appendChild(w);
+  });
+}
 function renderHistory(){
   const el=document.getElementById("historyList");
-  if(!state.history.length){el.innerHTML='<p class="muted">Nenhum treino registrado ainda.</p>'; return;}
-  el.innerHTML="";
-  state.history.forEach(h=>{
-    const date=new Date(h.date).toLocaleDateString("pt-BR");
-    const detail=h.type==="Corrida" ? `${h.distance||0} km • dor ${h.pain}/10 • energia ${h.energy}` : (h.title||"Treino de musculação");
-    const div=document.createElement("div"); div.className="history-item";
-    div.innerHTML=`<div><b>${h.type}</b><span>${detail}</span></div><span>${date}</span>`;
-    el.appendChild(div);
-  });
+  if(!state.history.length){el.innerHTML='<p class="muted">Ainda não há treinos registrados.</p>';return;}
+  el.innerHTML=state.history.map(h=>`<div class="history-item"><div><b>${h.type}</b><span>${h.title||""}${h.km?` • ${h.km} km`:""}</span></div><span>${new Date(h.date).toLocaleDateString("pt-BR")}</span></div>`).join("");
 }
-
 function renderStats(){
-  const seven=Date.now()-7*24*60*60*1000;
-  const week=state.history.filter(h=>new Date(h.date).getTime()>=seven);
-  const workouts=week.filter(h=>h.type==="Musculação").length;
-  const runs=week.filter(h=>h.type==="Corrida");
-  const km=runs.reduce((a,b)=>a+(b.distance||0),0);
-  document.getElementById("weekWorkouts").textContent=`${workouts}/4`;
-  document.getElementById("weekRuns").textContent=`${runs.length}/2`;
-  document.getElementById("weekKm").textContent=`${km.toFixed(1)} km`;
-  document.getElementById("streak").textContent=new Set(week.map(h=>new Date(h.date).toDateString())).size;
-  const best=Math.max(profile.longestRun,...state.history.filter(h=>h.type==="Corrida").map(h=>h.distance||0));
-  document.getElementById("bestDistance").textContent=`${best} km`;
+  const seven=Date.now()-7*86400000, week=state.history.filter(h=>new Date(h.date).getTime()>=seven);
+  const km=week.filter(h=>h.type==="Corrida").reduce((a,b)=>a+(b.km||0),0);
+  document.getElementById("statSessions").textContent=`${week.length}/7`;
+  document.getElementById("statKm").textContent=km.toFixed(1);
+  document.getElementById("statPain").textContent=`${state.pain}/10`;
+  document.getElementById("statEnergy").textContent=state.energy;
+  const best=Math.max(10,...state.history.filter(h=>h.type==="Corrida").map(h=>h.km||0));
+  document.getElementById("bestRun").textContent=`${best} km`;
 }
-
 function renderProgress(){
-  const weekRuns=state.history.filter(h=>h.type==="Corrida").length;
-  const weekStrength=state.history.filter(h=>h.type==="Musculação").length;
+  const total=state.history.length, runs=state.history.filter(h=>h.type==="Corrida").length, strength=state.history.filter(h=>h.type==="Musculação").length;
   const items=[
-    ["Meta de corrida: 21 km", Math.min(100,(profile.longestRun/21)*100)],
-    ["Consistência corrida", Math.min(100,weekRuns*10)],
-    ["Consistência musculação", Math.min(100,weekStrength*5)]
+    ["Consistência geral",Math.min(100,total*4)],
+    ["Consistência de corrida",Math.min(100,runs*8)],
+    ["Consistência de musculação",Math.min(100,strength*5)],
+    ["Jornada até 21K",Math.min(100,10/21*100)]
   ];
-  const el=document.getElementById("progressBars"); el.innerHTML="";
-  items.forEach(([name,p])=>{
-    const div=document.createElement("div"); div.className="progress-item";
-    div.innerHTML=`<b>${name}</b><div class="bar"><i style="width:${p}%"></i></div>`;
-    el.appendChild(div);
-  });
+  document.getElementById("progressList").innerHTML=items.map(([n,p])=>`<div class="progress-item"><b>${n}</b><div class="bar"><i style="width:${p}%"></i></div></div>`).join("");
 }
 
-const pain=document.getElementById("painRange"), painValue=document.getElementById("painValue"), painAdvice=document.getElementById("painAdvice");
-pain.value=state.pain;
+const painRange=document.getElementById("painRange");
+painRange.value=state.pain;
 function updatePain(){
-  state.pain=Number(pain.value); painValue.textContent=`${state.pain}/10`;
-  if(state.pain<=2) painAdvice.textContent="Dor baixa. Mantenha atenção à técnica e ao impacto.";
-  else if(state.pain<=4) painAdvice.textContent="Dor moderada. Reduza impacto e evite aumentar volume ou intensidade.";
-  else painAdvice.textContent="Dor alta. O app recomenda não fazer corrida de impacto e buscar avaliação profissional.";
-  save();
+  state.pain=Number(painRange.value);save();
+  document.getElementById("painText").textContent=`${state.pain}/10`;
+  const adv=state.pain<=2?"Dor baixa: mantenha o treino, sem aumentar impacto de forma agressiva.":state.pain<=4?"Dor moderada: reduza volume e intensidade da corrida; priorize controle.":"Dor alta: evite corrida de impacto e considere avaliação profissional antes de progredir.";
+  document.getElementById("painAdvice").textContent=adv;renderStats();
 }
-pain.oninput=updatePain; updatePain();
+painRange.oninput=updatePain; updatePain();
 
-document.querySelectorAll("#energySeg button").forEach(btn=>{
-  btn.classList.toggle("selected",btn.dataset.energy===state.energy);
-  btn.onclick=()=>{
-    state.energy=btn.dataset.energy; save();
-    document.querySelectorAll("#energySeg button").forEach(b=>b.classList.toggle("selected",b===btn));
-  }
+document.querySelectorAll("#energyButtons button").forEach(b=>{
+  b.classList.toggle("selected",b.dataset.energy===state.energy);
+  b.onclick=()=>{state.energy=b.dataset.energy;save();document.querySelectorAll("#energyButtons button").forEach(x=>x.classList.toggle("selected",x===b));renderStats();};
 });
 
-document.getElementById("generateBtn").onclick=()=>{
-  const pain=state.pain, energy=state.energy;
-  const generated=[...baseWeek];
-  if(pain>=5){
-    generated[1]={day:"Terça",type:"Baixo impacto",detail:"Bike/elíptico 30 min + mobilidade"};
-    generated[3]={day:"Quinta",type:"Baixo impacto",detail:"Bike/elíptico 30–40 min"};
-  } else if(pain>=3 || energy==="Baixa"){
-    generated[1]={day:"Terça",type:"Corrida leve",detail:"25–30 min, corrida/caminhada, RPE 3–4"};
-    generated[3]={day:"Quinta",type:"Corrida leve",detail:"30 min sem progressão de volume"};
+document.querySelectorAll("[data-coach]").forEach(b=>b.onclick=()=>{
+  const answers={
+    short:"Versão de 30 min: faça os 4 primeiros exercícios do treino do dia, 3 séries cada, descansos de 45–60s. Se for corrida, faça 5 min leve + 20 min contínuos/corrida-caminhada + 5 min leve.",
+    tired:"Mantenha a sessão, mas reduza 1 série dos exercícios principais e trabalhe em RIR 3–4. Na corrida, fique em RPE 3–4 sem bloco forte.",
+    pain:"Troque corrida por bike/elíptico 30–40 min em esforço leve. Na musculação, evite movimentos que aumentem a dor e reduza carga/volume de pernas.",
+    crowded:"Troque máquinas por equivalentes: supino máquina ↔ halteres; remada máquina ↔ cabo; puxada ↔ barra guiada; extensora/flexora podem ser mantidas por serem mais fáceis de alternar."
+  };
+  document.getElementById("coachAnswer").textContent=answers[b.dataset.coach];
+});
+
+document.getElementById("regenPlan").onclick=()=>{
+  plan=buildPlan();
+  if(state.pain>=5){
+    plan.forEach(w=>w.forEach((s,i)=>{
+      if(s.type==="run") w[i]={day:s.day,type:"run",run:{title:"Cardio sem impacto",duration:"30–40 min",pace:"Leve",structure:"Bike ou elíptico contínuo",note:"Usado temporariamente por dor elevada na perna."}};
+    }));
   }
-  const weekEl=document.getElementById("weekGrid"); weekEl.innerHTML="";
-  generated.forEach(d=>{
-    const div=document.createElement("div"); div.className="day-card";
-    div.innerHTML=`<strong>${d.day}</strong><b>${d.type}</b><span>${d.detail}</span>`;
-    weekEl.appendChild(div);
-  });
-  alert("Semana ajustada com base no check-in.");
+  renderAll(); alert("Plano ajustado com base no seu check-in atual.");
 };
 
-function renderAll(){renderWeek();renderExercises();renderHistory();renderStats();renderProgress();}
+document.getElementById("exportPlan").onclick=()=>{
+  const text=plan[state.selectedWeek].map(s=>`${s.day}: ${sessionTitle(s)} — ${sessionShort(s)}`).join("\n");
+  const blob=new Blob([`HYBRID 21 • Semana ${state.selectedWeek+1}\n\n${text}`],{type:"text/plain"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`hybrid21-semana-${state.selectedWeek+1}.txt`; a.click(); URL.revokeObjectURL(a.href);
+};
+
+function renderAll(){
+  renderMiniWeek();renderFullWeek();renderToday();renderStrength();renderRunning();renderHistory();renderStats();renderProgress();
+}
 renderAll();
